@@ -34,13 +34,13 @@ Temporal action proposal generation is an important yet challenging problem, sin
 
 ~~These code is  implemented in Pytorch 0.4.1 + Python2 + tensorboardX. Thus please install Pytorch first.~~
 
-Python 3
-PyTorch 2.x
-tensorboardX
-torchvision
-pandas
-scipy
-matplotlib
+* Python 3
+* PyTorch 2.x
+* tensorboardX
+* torchvision
+* pandas
+* scipy
+* matplotlib
 
 # Code and Data Preparation
 
