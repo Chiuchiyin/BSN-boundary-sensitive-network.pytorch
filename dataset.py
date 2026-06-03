@@ -37,8 +37,8 @@ class VideoDataSet(data.Dataset):
                 self.video_dict[video_name] = video_info
             if self.subset in video_subset:
                 self.video_dict[video_name] = video_info
-        self.video_list = self.video_dict.keys()
-        print "%s subset video numbers: %d" %(self.subset,len(self.video_list))
+        self.video_list = list(self.video_dict.keys())
+        print ("%s subset video numbers: %d" %(self.subset,len(self.video_list)))
 
     def __getitem__(self, index):
         video_data,anchor_xmin,anchor_xmax = self._get_base_data(index)
@@ -136,8 +136,8 @@ class ProposalDataSet(data.Dataset):
                 self.video_dict[video_name] = video_info
             if self.subset in video_subset:
                 self.video_dict[video_name] = video_info
-        self.video_list = self.video_dict.keys()
-        print "%s subset video numbers: %d" %(self.subset,len(self.video_list))
+        self.video_list = list(self.video_dict.keys())
+        print ("%s subset video numbers: %d" %(self.subset,len(self.video_list)))
 
     def __len__(self):
         return len(self.video_list)
@@ -149,15 +149,16 @@ class ProposalDataSet(data.Dataset):
         video_feature = numpy.load("./output/PGM_feature/" + video_name+".npy")
         video_feature = video_feature[:self.top_K,:]
         #print len(video_feature),len(pdf)
-        video_feature = torch.Tensor(video_feature)
+        video_feature = torch.tensor(video_feature, dtype=torch.float32) 
 
         if self.mode == "train":
-            video_match_iou = torch.Tensor(pdf.match_iou.values[:])
+            match_iou_array = pdf.match_iou.values.copy()      # copy to make writable
+            video_match_iou = torch.tensor(match_iou_array, dtype=torch.float32)
             return video_feature,video_match_iou
         else:
-            video_xmin =pdf.xmin.values[:]
-            video_xmax =pdf.xmax.values[:]
-            video_xmin_score = pdf.xmin_score.values[:]
-            video_xmax_score = pdf.xmax_score.values[:]
+            video_xmin = torch.from_numpy(pdf.xmin.values.copy()).float()
+            video_xmax = torch.from_numpy(pdf.xmax.values.copy()).float()
+            video_xmin_score = torch.from_numpy(pdf.xmin_score.values.copy()).float()
+            video_xmax_score = torch.from_numpy(pdf.xmax_score.values.copy()).float()
             return video_feature,video_xmin,video_xmax,video_xmin_score,video_xmax_score
         

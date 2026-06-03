@@ -6,6 +6,7 @@ This repo holds the pytorch-version codes of paper: "BSN: Boundary Sensitive Net
 
 # Update
 
+* 2026.06.02: Updated the code to work on Python 3 and PyTorch 2.x
 * 2018.12.12: Release Pytorch-version BSN
 * 2018.09.26: Previously, we adopted classification results from result files of "Uts at activitynet 2016" for action detection experiments. Recently we found that the classification accuracy of these results are unexpected high. Thus we replace it with classification results of "cuhk & ethz & siat submission to activitynet challenge 2017" and updated all related experiments accordingly. You can find updated papers in my [homepage](wzmsltw.github.io) and in arXiv.
 * 2018.07.09: Codes and feature of BSN
@@ -27,10 +28,19 @@ This repo holds the pytorch-version codes of paper: "BSN: Boundary Sensitive Net
 
 Temporal action proposal generation is an important yet challenging problem, since temporal proposals with rich action content are indispensable for analysing real-world videos with long duration and high proportion irrelevant content. This problem requires methods not only generating proposals with precise temporal boundaries, but also retrieving proposals to cover truth action instances with high recall and high overlap using relatively fewer proposals. To address these difficulties, we introduce an effective proposal generation method, named Boundary-Sensitive Network (BSN), which adopts “local to global” fashion. Locally, BSN first locates temporal boundaries with high probabilities, then directly combines these boundaries as proposals. Globally, with Boundary-Sensitive Proposal feature, BSN retrieves proposals by evaluating the confidence of whether a proposal contains an action within its region. We conduct experiments on two challenging datasets: ActivityNet-1.3 and THUMOS14, where BSN outperforms other state-of-the-art temporal action proposal generation methods with high recall and high temporal precision. Finally, further experiments demonstrate that by combining existing action classifiers, our method significantly improves the state-of-the-art temporal action detection performance.
 
+<img src="./evaluation_result.jpg" width = "700" alt="image" align=center />
 
 # Prerequisites
 
-These code is  implemented in Pytorch 0.4.1 + Python2 + tensorboardX. Thus please install Pytorch first.
+~~These code is  implemented in Pytorch 0.4.1 + Python2 + tensorboardX. Thus please install Pytorch first.~~
+
+Python 3
+PyTorch 2.x
+tensorboardX
+torchvision
+pandas
+scipy
+matplotlib
 
 # Code and Data Preparation
 
@@ -39,10 +49,8 @@ These code is  implemented in Pytorch 0.4.1 + Python2 + tensorboardX. Thus pleas
 Clone this repo with git, please use:
 
 ```
-git clone https://github.com/wzmsltw/BSN-boundary-sensitive-network.pytorch.git
+git clone https://github.com/Chiuchiyin/BSN-boundary-sensitive-network.pytorch.git
 ```
-
-
 
 ## Download Datasets
 
@@ -134,6 +142,9 @@ Please cite the following paper if you feel SSN useful to your research
 
 
 ## Contact
+
+I have no intention to maintain the code for the long term, just updating it to work before making heavy modification for internal project. Please contact the original author.
+
 For any question, please file an issue or contact
 ```
 Tianwei Lin: wzmsltw@sjtu.edu.cn

@@ -17,6 +17,11 @@ from pgm import PGM_proposal_generation,PGM_feature_generation
 from post_processing import BSN_post_processing
 from eval import evaluation_proposal
 
+def pem_collate_fn(batch):
+    batch_data = torch.cat([x[0] for x in batch])
+    batch_iou = torch.cat([x[1] for x in batch])
+    return batch_data,batch_iou
+
 def train_TEM(data_loader,model,optimizer,epoch,writer,opt):
     model.train()
     epoch_action_loss = 0
@@ -42,9 +47,9 @@ def train_TEM(data_loader,model,optimizer,epoch,writer,opt):
     writer.add_scalars('data/end', {'train': epoch_end_loss/(n_iter+1)}, epoch)
     writer.add_scalars('data/cost', {'train': epoch_cost/(n_iter+1)}, epoch)
 
-    print "TEM training loss(epoch %d): action - %.03f, start - %.03f, end - %.03f" %(epoch,epoch_action_loss/(n_iter+1),
+    print ("TEM training loss(epoch %d): action - %.03f, start - %.03f, end - %.03f" %(epoch,epoch_action_loss/(n_iter+1),
                                                                                         epoch_start_loss/(n_iter+1),
-                                                                                        epoch_end_loss/(n_iter+1))
+                                                                                        epoch_end_loss/(n_iter+1)))
 
 def test_TEM(data_loader,model,epoch,writer,opt):
     model.eval()
@@ -66,9 +71,9 @@ def test_TEM(data_loader,model,epoch,writer,opt):
     writer.add_scalars('data/end', {'test': epoch_end_loss/(n_iter+1)}, epoch)
     writer.add_scalars('data/cost', {'test': epoch_cost/(n_iter+1)}, epoch)
     
-    print "TEM testing  loss(epoch %d): action - %.03f, start - %.03f, end - %.03f" %(epoch,epoch_action_loss/(n_iter+1),
+    print ("TEM testing  loss(epoch %d): action - %.03f, start - %.03f, end - %.03f" %(epoch,epoch_action_loss/(n_iter+1),
                                                                                         epoch_start_loss/(n_iter+1),
-                                                                                        epoch_end_loss/(n_iter+1))
+                                                                                        epoch_end_loss/(n_iter+1)))
     state = {'epoch': epoch + 1,
                 'state_dict': model.state_dict()}
     torch.save(state, opt["checkpoint_path"]+"/tem_checkpoint.pth.tar" )
@@ -90,7 +95,7 @@ def train_PEM(data_loader,model,optimizer,epoch,writer,opt):
 
     writer.add_scalars('data/iou_loss', {'train': epoch_iou_loss/(n_iter+1)}, epoch)
     
-    print "PEM training loss(epoch %d): iou - %.04f" %(epoch,epoch_iou_loss/(n_iter+1))
+    print ("PEM training loss(epoch %d): iou - %.04f" %(epoch,epoch_iou_loss/(n_iter+1)))
 
 def test_PEM(data_loader,model,epoch,writer,opt):
     model.eval()
@@ -103,7 +108,7 @@ def test_PEM(data_loader,model,epoch,writer,opt):
 
     writer.add_scalars('data/iou_loss', {'validation': epoch_iou_loss/(n_iter+1)}, epoch)
     
-    print "PEM testing  loss(epoch %d): iou - %.04f" %(epoch,epoch_iou_loss/(n_iter+1))
+    print ("PEM testing  loss(epoch %d): iou - %.04f" %(epoch,epoch_iou_loss/(n_iter+1)))
     
     state = {'epoch': epoch + 1,
                 'state_dict': model.state_dict()}
@@ -131,6 +136,7 @@ def BSN_Train_TEM(opt):
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer,step_size = opt["tem_step_size"], gamma = opt["tem_step_gamma"])
         
     for epoch in range(opt["tem_epoch"]):
+        optimizer.step()
         scheduler.step()
         train_TEM(train_loader,model,optimizer,epoch,writer,opt)
         test_TEM(test_loader,model,epoch,writer,opt)
@@ -145,23 +151,19 @@ def BSN_Train_PEM(opt):
     
     optimizer = optim.Adam(model.parameters(),lr=opt["pem_training_lr"],weight_decay = opt["pem_weight_decay"])
     
-    def collate_fn(batch):
-        batch_data = torch.cat([x[0] for x in batch])
-        batch_iou = torch.cat([x[1] for x in batch])
-        return batch_data,batch_iou
-    
     train_loader = torch.utils.data.DataLoader(ProposalDataSet(opt,subset="train"),
                                                 batch_size=model.module.batch_size, shuffle=True,
-                                                num_workers=8, pin_memory=True,drop_last=True,collate_fn=collate_fn)            
+                                                num_workers=8, pin_memory=True,drop_last=True,collate_fn=pem_collate_fn)            
     
     test_loader = torch.utils.data.DataLoader(ProposalDataSet(opt,subset="validation"),
                                                 batch_size=model.module.batch_size, shuffle=True,
-                                                num_workers=8, pin_memory=True,drop_last=True,collate_fn=collate_fn)
+                                                num_workers=8, pin_memory=True,drop_last=True,collate_fn=pem_collate_fn)
         
     
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer,step_size = opt["pem_step_size"], gamma = opt["pem_step_gamma"])
         
     for epoch in range(opt["pem_epoch"]):
+        optimizer.step()
         scheduler.step()
         train_PEM(train_loader,model,optimizer,epoch,writer,opt)
         test_PEM(test_loader,model,epoch,writer,opt)
@@ -236,53 +238,53 @@ def BSN_inference_PEM(opt):
 def main(opt):
     if opt["module"] == "TEM":
         if opt["mode"] == "train":
-            print "TEM training start"  
+            print ("TEM training start")  
             BSN_Train_TEM(opt)
-            print "TEM training finished"  
+            print ("TEM training finished")  
         elif opt["mode"] == "inference":
-            print "TEM inference start"  
+            print ("TEM inference start")  
             if not os.path.exists("output/TEM_results"):
                 os.makedirs("output/TEM_results") 
             BSN_inference_TEM(opt)
-            print "TEM inference finished"
+            print ("TEM inference finished")
         else:
-            print "Wrong mode. TEM has two modes: train and inference"
+            print ("Wrong mode. TEM has two modes: train and inference")
           
     elif opt["module"] == "PGM":
         if not os.path.exists("output/PGM_proposals"):
             os.makedirs("output/PGM_proposals") 
-        print "PGM: start generate proposals"
+        print ("PGM: start generate proposals")
         PGM_proposal_generation(opt)
-        print "PGM: finish generate proposals"
+        print ("PGM: finish generate proposals")
         
         if not os.path.exists("output/PGM_feature"):
             os.makedirs("output/PGM_feature") 
-        print "PGM: start generate BSP feature"
+        print ("PGM: start generate BSP feature")
         PGM_feature_generation(opt)
-        print "PGM: finish generate BSP feature"
+        print ("PGM: finish generate BSP feature")
     
     elif opt["module"] == "PEM":
         if opt["mode"] == "train":
-            print "PEM training start"  
+            print ("PEM training start")  
             BSN_Train_PEM(opt)
-            print "PEM training finished"  
+            print ("PEM training finished")  
         elif opt["mode"] == "inference":
             if not os.path.exists("output/PEM_results"):
                 os.makedirs("output/PEM_results") 
-            print "PEM inference start"  
+            print ("PEM inference start")  
             BSN_inference_PEM(opt)
-            print "PEM inference finished"
+            print ("PEM inference finished")
         else:
-            print "Wrong mode. PEM has two modes: train and inference"
+            print ("Wrong mode. PEM has two modes: train and inference")
     
     elif opt["module"] == "Post_processing":
-        print "Post processing start"
+        print ("Post processing start")
         BSN_post_processing(opt)
-        print "Post processing finished"
+        print ("Post processing finished")
         
     elif opt["module"] == "Evaluation":
         evaluation_proposal(opt)
-    print ""
+    print ("")
         
 if __name__ == '__main__':
     opt = opts.parse_opt()

@@ -22,7 +22,7 @@ def run_evaluation(ground_truth_filename, proposal_filename,
     
     return (average_nr_proposals, average_recall, recall)
 
-def plot_metric(opt,average_nr_proposals, average_recall, recall, tiou_thresholds=np.linspace(0.5, 0.95, 10)):
+def plot_metric(opt, average_nr_proposals, average_recall, recall, tiou_thresholds=np.linspace(0.5, 0.95, 10)):
 
     fn_size = 14
     plt.figure(num=None, figsize=(12, 8))
@@ -31,7 +31,7 @@ def plot_metric(opt,average_nr_proposals, average_recall, recall, tiou_threshold
     colors = ['k', 'r', 'yellow', 'b', 'c', 'm', 'b', 'pink', 'lawngreen', 'indigo']
     area_under_curve = np.zeros_like(tiou_thresholds)
     for i in range(recall.shape[0]):
-        area_under_curve[i] = np.trapz(recall[i], average_nr_proposals)
+        area_under_curve[i] = np.trapezoid(recall[i], average_nr_proposals)
 
     for idx, tiou in enumerate(tiou_thresholds[::2]):
         ax.plot(average_nr_proposals, recall[2*idx,:], color=colors[idx+1],
@@ -39,20 +39,32 @@ def plot_metric(opt,average_nr_proposals, average_recall, recall, tiou_threshold
                 linewidth=4, linestyle='--', marker=None)
     # Plots Average Recall vs Average number of proposals.
     ax.plot(average_nr_proposals, average_recall, color=colors[0],
-            label="tiou = 0.5:0.05:0.95," + " area=" + str(int(np.trapz(average_recall, average_nr_proposals)*100)/100.), 
+            label="tiou = 0.5:0.05:0.95," + " area=" + str(int(np.trapezoid(average_recall, average_nr_proposals)*100)/100.), 
             linewidth=4, linestyle='-', marker=None)
 
+    # Adjust legend: place outside or below to avoid overlapping
     handles, labels = ax.get_legend_handles_labels()
-    ax.legend([handles[-1]] + handles[:-1], [labels[-1]] + labels[:-1], loc='best')
+    # Move legend outside the plot (bbox_to_anchor)
+    ax.legend(handles, labels, loc='upper center', bbox_to_anchor=(0.5, -0.15), 
+              ncol=2, fontsize=12)
     
     plt.ylabel('Average Recall', fontsize=fn_size)
     plt.xlabel('Average Number of Proposals per Video', fontsize=fn_size)
-    plt.grid(b=True, which="both")
+    plt.grid(visible=True, which="both", linestyle='--', alpha=0.7)
     plt.ylim([0, 1.0])
-    plt.setp(plt.axes().get_xticklabels(), fontsize=fn_size)
-    plt.setp(plt.axes().get_yticklabels(), fontsize=fn_size)
-    #plt.show()    
-    plt.savefig(opt["save_fig_path"])
+    
+    # Improve tick labels: rotate if needed, but usually horizontal is fine
+    # Use MaxNLocator to reduce number of ticks if overlapping
+    from matplotlib.ticker import MaxNLocator
+    ax.xaxis.set_major_locator(MaxNLocator(nbins=10, integer=True))
+    ax.tick_params(axis='both', labelsize=fn_size)
+    
+    # Automatic layout adjustment to prevent cutting off labels/legend
+    plt.tight_layout()
+    
+    # Save with high DPI for clarity
+    plt.savefig(opt["save_fig_path"], dpi=150, bbox_inches='tight')
+    plt.close()  # avoid displaying if running headless
 
 def evaluation_proposal(opt):
     
@@ -64,7 +76,7 @@ def evaluation_proposal(opt):
         subset='validation')
     
     plot_metric(opt,uniform_average_nr_proposals_valid, uniform_average_recall_valid, uniform_recall_valid)
-    print "AR@1 is \t",np.mean(uniform_recall_valid[:,0])
-    print "AR@5 is \t",np.mean(uniform_recall_valid[:,4])
-    print "AR@10 is \t",np.mean(uniform_recall_valid[:,9])
-    print "AR@100 is \t",np.mean(uniform_recall_valid[:,-1])
+    print ("AR@1 is \t",np.mean(uniform_recall_valid[:,0]))
+    print ("AR@5 is \t",np.mean(uniform_recall_valid[:,4]))
+    print ("AR@10 is \t",np.mean(uniform_recall_valid[:,9]))
+    print ("AR@100 is \t",np.mean(uniform_recall_valid[:,-1]))
